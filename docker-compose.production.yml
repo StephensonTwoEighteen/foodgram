@@ -8,17 +8,13 @@ services:
 
   foodgram_db:
     image: postgres:13.0-alpine
-    environment:
-      POSTGRES_DB: foodgram
-      POSTGRES_USER: foodgram_user
-      POSTGRES_PASSWORD: foodgram_password
     volumes:
       - pg_data_production:/var/lib/postgresql/data/
     env_file:
       - ./.env
 
   backend:
-    image: foodgram_b
+    image: stephensontwoeighteen/foodgram_backend
     restart: always
     volumes:
       - data_volume:/app/data/
@@ -30,11 +26,11 @@ services:
       - ./.env
 
   frontend:
-    image: foodgram_f
+    image: stephensontwoeighteen/foodgram_frontend
     volumes:
       - ../frontend/:/app/result_build/
   nginx:
-    image: foodgram_i
+    image: stephensontwoeighteen/foodgram_nginx
     ports:
       - "8000:80"
     volumes:
@@ -44,7 +40,7 @@ services:
       - ./collected_static/rest_framework:/var/html/static/rest_framework/
       - ./media:/var/html/media/
       - ../frontend/build:/usr/share/nginx/html
-      - ../frontend/build/static:/var/html/static 
+      - ../frontend/build/static:/var/html/static
 
     depends_on:
       - backend
