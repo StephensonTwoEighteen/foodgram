@@ -150,8 +150,7 @@ class Subscription(models.Model):
 
 
 def generate_hash() -> str:
-    """Генерирует случайную строку"""
-
+    """Генерирует случайную строку."""
     return ''.join(
         choice(string.ascii_letters + string.digits)
         for _ in range(randint(15, 32)))

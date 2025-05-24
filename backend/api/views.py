@@ -1,6 +1,9 @@
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Subscription, Tag, User,
+                            generate_hash)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.parsers import JSONParser
@@ -11,9 +14,6 @@ from rest_framework.views import APIView
 
 from foodgram.settings import BASE_URL, DEBUG
 
-from .models import (Favorite, Ingredient, Recipe,
-                     RecipeIngredient, ShoppingCart, Subscription, Tag, User,
-                     generate_hash)
 from .permissions import IsAdmin, IsAuthorOrReadOnly
 from .serializers import (IngredientSerializer, PasswordSerializer,
                           RecipeCreateSerializer, RecipeSerializer,

@@ -1,15 +1,13 @@
 """URL configuration for foodgram project."""
+from api.views import recipe_by_short_link
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-from recipes.views import recipe_by_short_link
 
 urlpatterns = [
-    path('admin/',
-         admin.site.urls),
-    path('api/',
-         include('recipes.urls')),
+    path('admin/', admin.site.urls),
+    path('api/', include('api.urls')),
     path('s/<slug:short_link>/',
          recipe_by_short_link,
          name='recipe-short-link'),

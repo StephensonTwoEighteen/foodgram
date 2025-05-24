@@ -7,7 +7,7 @@ from .constants import USERNAME_REGEX
 
 
 def validate_year_not_future(value):
-    """Проверяет, что год не в будущем"""
+    """Проверяет, что год не в будущем."""
     if value > datetime.now().year:
         raise ValidationError("Год создания не может быть больше текущего.")
 

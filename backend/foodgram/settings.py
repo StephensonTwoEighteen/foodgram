@@ -1,6 +1,7 @@
 """Django settings for Foodgram project."""
 import os
 from pathlib import Path
+
 from django.contrib.admin import AdminSite
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,6 +27,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'djoser',
     'django_filters',
+    'api',
     'recipes',
     'corsheaders',
 ]
@@ -133,9 +135,9 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': False,
     'SERIALIZERS': {
-        'user_create': 'recipes.serializers.UserCreateSerializer',
-        'user': 'recipes.serializers.UserSerializer',
-        'current_user': 'recipes.serializers.UserSerializer',
+        'user_create': 'api.serializers.UserCreateSerializer',
+        'user': 'api.serializers.UserSerializer',
+        'current_user': 'api.serializers.UserSerializer',
     },
     'PERMISSIONS': {
         'user': ['rest_framework.permissions.IsAuthenticated'],
