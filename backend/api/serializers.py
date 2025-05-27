@@ -3,11 +3,25 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
+from django.forms import IntegerField
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from djoser.serializers import UserSerializer as BaseUserSerializer
-from recipes.models import (Ingredient, LinkMapped, Recipe, RecipeIngredient,
-                            Subscription, Tag)
 from rest_framework import serializers
+
+from api.constants import (
+    COOKING_TIME_MAX,
+    COOKING_TIME_MIN,
+    RECIPE_INGREDIENT_AMOUT_MAX,
+    RECIPE_INGREDIENT_AMOUT_MIN
+)
+from recipes.models import (
+    Ingredient,
+    LinkMapped,
+    Recipe,
+    RecipeIngredient,
+    Subscription,
+    Tag
+)
 
 User = get_user_model()
 
@@ -20,7 +34,7 @@ class Base64ImageField(serializers.ImageField):
 
             data = ContentFile(
                 base64.b64decode(imgstr),
-                name=f"{uuid.uuid4()}.{ext}"
+                name=f'{uuid.uuid4()}.{ext}'
             )
         return super().to_internal_value(data)
 
@@ -56,10 +70,7 @@ class UserSerializer(BaseUserSerializer):
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return Subscription.objects.filter(
-                user=request.user,
-                author=obj
-            ).exists()
+            return obj.follower.filter(user=request.user).exists()
         return False
 
 
@@ -80,6 +91,8 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit')
+    amount = IntegerField(max_value=RECIPE_INGREDIENT_AMOUT_MAX,
+                          min_value=RECIPE_INGREDIENT_AMOUT_MIN)
 
     class Meta:
         model = RecipeIngredient
@@ -107,11 +120,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             'is_in_shopping_cart', 'short_link'
         ]
 
-    # def get_image(self, obj):
-    #     if not obj.image:
-    #         return None
-    #     return f"{settings.BASE_URL}{obj.image.url}"
-
     def get_image(self, obj):
         if not obj.image:
             return None
@@ -137,6 +145,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     )
     ingredients = RecipeIngredientSerializer(many=True)
     image = Base64ImageField(required=False)
+    cooking_time = IntegerField(
+        max_value=COOKING_TIME_MAX,
+        min_value=COOKING_TIME_MIN
+    )
 
     class Meta:
         model = Recipe
@@ -163,18 +175,13 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags', None)
         ingredients_data = validated_data.pop('ingredients', None)
-
         if tags is not None:
             instance.tags.set(tags)
-
         if ingredients_data is not None:
             instance.recipe_ingredients.all().delete()
             self._create_or_update_ingredients(instance, ingredients_data)
-
-        # Обновляем остальные поля
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-
         instance.save()
         return instance
 
@@ -193,32 +200,16 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def validate_ingredients(self, value):
         if not value:
             raise serializers.ValidationError(
-                "Необходим хотя бы один ингредиент.")
-
-        # Проверка уникальности ингредиентов
+                'Необходим хотя бы один ингредиент.')
         ingredient_ids = [item['id'].id for item in value]
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError(
-                "Ингредиенты не должны повторяться.")
-
-        # Проверка количества
-        for ingredient in value:
-            if ingredient['amount'] <= 0:
-                raise serializers.ValidationError(
-                    f"Количество ингредиента '{ingredient['id'].name}' "
-                    "должно быть больше 0"
-                )
+                'Ингредиенты не должны повторяться.')
         return value
 
     def validate_tags(self, value):
         if not value:
-            raise serializers.ValidationError("Необходим хотя бы один тег.")
-        return value
-
-    def validate_cooking_time(self, value):
-        if value <= 0:
-            raise serializers.ValidationError(
-                "Время приготовления должно быть больше 0.")
+            raise serializers.ValidationError('Необходим хотя бы один тег.')
         return value
 
     def to_representation(self, instance):
@@ -243,10 +234,13 @@ class ShortenerSerializer(serializers.ModelSerializer):
         fields = ('short_link',)
 
     def get_short_link(self, obj):
-        request = self.context.get('request')
-        return request.build_absolute_uri(
-            f"/s/{obj.url_hash}/"
-        )
+        try:
+            request = self.context['request']
+            return request.build_absolute_uri(f'/s/{obj.url_hash}/')
+        except KeyError:
+            raise serializers.ValidationError(
+                'Request object is missing in context.'
+            )
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
