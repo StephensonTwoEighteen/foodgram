@@ -9,4 +9,4 @@ def generate_hash() -> str:
         choice(string.ascii_letters + string.digits)
         for _ in range(randint(RANDOM_HASH_LENGTH_MIN,
                                RANDOM_HASH_LENGTH_MAX))
-            )
+    )
