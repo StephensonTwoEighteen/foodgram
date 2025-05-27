@@ -109,7 +109,6 @@ class UserViewSet(viewsets.ModelViewSet):
                     {'errors': 'Вы уже подписаны на этого автора'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-        
             Subscription.objects.create(user=user, author=author)
             serializer = SubscriptionSerializer(
                 author,
